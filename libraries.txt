@@ -1,0 +1,12 @@
+numpy
+scikit-image==0.26.0
+tifffile
+scipy
+pandas
+skan
+tqdm
+imageio
+openpyxl
+networkx
+numba
+toolz
