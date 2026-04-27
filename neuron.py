@@ -52,6 +52,7 @@ class PipelineConfig:
     sholl_step_px: float = 5.0           # radial step between concentric rings (pixels)
     sholl_start_px: float = 0.0          # inner radius offset from soma center (0 = soma edge)
     sholl_pixel_size_um: float = 1.0     # µm per pixel (for reporting radii in µm)
+                                         # value is 1.9 for 20x images and 3.9 for 40x on imaging microscope
 
 
 # Pipeline
