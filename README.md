@@ -60,11 +60,12 @@ For each input image, the tool generates a dedicated folder containing:
 
 | File | Description |
 |------|-------------|
-| `*_grayscale.tif` | Grayscale version of the input image |
-| `*_masked.tif` | Masked image of the input |
-| `*_overlay.tif` | Overlay image — **green** = detected neuron sections, **red line** = preliminary skeleton |
-| `*_preprocessed.tif` | Preprocessed version of the input |
-| `*_skeleton.tif` | Final skeleton map |
+| `*_debug_soma_region.png` | Displays region outlined by soma_detect_disk, subsequent use in force_soma_root to generate central node  |
+| `*_gray.png` | Grayscale version of the input image |
+| `*_mask.png` | Masked image of the input |
+| `*_overlay.png` | Overlay image — **green** = detected neuron sections, **red line** = preliminary skeleton |
+| `*_preprocessed.png` | Preprocessed version of the input |
+| `*_skeleton.png` | Final skeleton map |
 | `branch_data.csv` | Per-branch measurements |
 | `neuron_data.csv` | Overall neuron measurements |
 | `sholl_analysis.csv` | Sholl analysis results |
