@@ -1,6 +1,6 @@
 # Sholl Analysis Tool
 
-**Automated pipeline for processing neuron images with structured CSV output.**
+Automated pipeline for processing neuron images with structured CSV output.
 
 _Package preprocesses, thresholds, segments, and skeletonizes structures for input in automated Sholl analysis._
 
