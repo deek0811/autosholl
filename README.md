@@ -1,11 +1,14 @@
-# Neuron Analysis Tool
+This file once its done being fully written will be deleted and the content will be transferred over so its fresh lol.
 
-Automated pipeline for processing neuron images — skeletonization, branch analysis, and Sholl analysis — with structured CSV output.
+# Sholl Analysis Tool
+
+Automated pipeline for processing neuron images with structured CSV output.
 
 ---
 
 ## Installation
 
+Necessary libraries are all found in libraries.txt.
 Install all required libraries using:
 
 ```bash
@@ -27,7 +30,7 @@ pip install -r libraries.txt
 
 ## Configuration
 
-Input and output directories are set at the top of `neuron.py` and can be changed to point to your own images:
+Input and output directories are set at the end of `neuron.py` and can be changed to point to your own images:
 
 ```python
 INPUT_DIR  = Path("./data")
@@ -73,4 +76,3 @@ A **summary CSV** consolidating all results is also written to the root of the o
 ## Notes
 
 - Input images must be `.tif` format.
-- This README is a work in progress and will be finalized before the stable release.
