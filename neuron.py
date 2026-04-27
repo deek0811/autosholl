@@ -401,6 +401,7 @@ class MorphologyPipeline:
             })
             return out
 
+        # Fall-back
         labels = label(skeleton)
         rows: List[Dict[str, Any]] = []
         for idx, p in enumerate(regionprops(labels), start=1):
@@ -420,6 +421,7 @@ class MorphologyPipeline:
         if skeleton.sum() == 0:
             return None
 
+        # Convolve with weighted kernel
         kernel = np.array([[1, 1, 1], [1, 10, 1], [1, 1, 1]])
         conv = ndi.convolve(skeleton.astype(np.uint8), kernel, mode="constant", cval=0)
         neighbor_count = conv - 10 * skeleton.astype(np.uint8)
@@ -469,6 +471,7 @@ class MorphologyPipeline:
             if crossing_pixels.any():
                 intersections[i] = int(label(crossing_pixels, connectivity=2).max())
 
+        # Branching index per shell: positive = branching, negative = terminating
         branching_index = np.zeros(len(radii), dtype=float)
         for i in range(len(radii) - 1):
             branching_index[i] = (intersections[i + 1] - intersections[i]) / 2.0
@@ -624,7 +627,6 @@ def run_batch(
     return all_summary
 
 # Run
-
 if __name__ == "__main__":
     neuron_cfg = PipelineConfig(
         mode="single_neuron",
