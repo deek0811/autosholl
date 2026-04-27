@@ -243,6 +243,7 @@ class MorphologyPipeline:
         best_label = None
         best_score = -np.inf
 
+        # Score objects and prefer larger or central objects
         for p in props:
             centroid = np.array(p.centroid)
             dist = np.linalg.norm(centroid - center)
@@ -262,6 +263,7 @@ class MorphologyPipeline:
             largest = max(regions, key=lambda r: r.area)
             soma_core = soma_labeled == largest.label
         else:
+            # Retry with smaller disk size
             fallback_disk = max(self.config.soma_fill_disk // 2, 3)
             soma_core = morphology.opening(soma_mask, morphology.disk(fallback_disk))
             soma_labeled = label(soma_core)
@@ -283,6 +285,7 @@ class MorphologyPipeline:
             largest = max(regions, key=lambda r: r.area)
             return soma_labeled == largest.label
         else:
+            # Retry with smaller disk size
             fallback_disk = max(self.config.soma_detect_disk // 2, 5)
             soma_core = morphology.opening(mask, morphology.disk(fallback_disk))
             soma_labeled = label(soma_core)
@@ -318,6 +321,7 @@ class MorphologyPipeline:
         soma_core = self._detect_soma_core(mask)
         soma_filled = ndi.binary_fill_holes(soma_core)
 
+        # Fall back to center if soma is not detected
         if soma_filled.sum() == 0:
             cy, cx = ndi.center_of_mass(mask)
             return skeleton, (int(cy), int(cx))
@@ -325,10 +329,12 @@ class MorphologyPipeline:
         cy, cx = ndi.center_of_mass(soma_filled)
         root = (int(cy), int(cx))
 
+        # Replace skeleton tangle with single root pixel
         skeleton_clean = skeleton.copy()
         skeleton_clean[soma_filled] = False
         skeleton_clean[root] = True
 
+        # Reconnnect dendrites to root if outside of soma boundary
         soma_dilated = morphology.binary_dilation(soma_filled, morphology.disk(2))
         entry_mask = soma_dilated & skeleton_clean
         entry_coords = np.argwhere(entry_mask)
@@ -410,7 +416,7 @@ class MorphologyPipeline:
 
     # Sholl Analysis
     def _find_soma_center(self, skeleton: np.ndarray) -> Optional[Tuple[int, int]]:
-        """Return (row, col) of the junction with the most neighbors, or None."""
+        # Return (row, col) of the junction with the most neighbors, or None
         if skeleton.sum() == 0:
             return None
 
@@ -437,7 +443,7 @@ class MorphologyPipeline:
         skeleton: np.ndarray,
         soma_center: Tuple[int, int],
     ) -> pd.DataFrame:
-        """Compute Sholl intersection profile and branching index."""
+        # Compute Sholl intersection profile and branching index
         if skeleton.sum() == 0:
             return pd.DataFrame(columns=["radius_px", "radius_um", "intersections", "branching_index"])
 
@@ -476,7 +482,7 @@ class MorphologyPipeline:
 
     @staticmethod
     def _sholl_summary_stats(sholl_df: pd.DataFrame) -> Dict[str, Any]:
-        """Derive AUC, peak intersections, critical radius, and ramification index."""
+        # Derive AUC, peak intersections, critical radius, and ramification index
         if sholl_df.empty or sholl_df["intersections"].sum() == 0:
             return {
                 "sholl_auc": 0.0,
