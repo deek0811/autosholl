@@ -19,6 +19,7 @@ from skimage.graph import route_through_array
 from skimage.measure import label, regionprops
 from skimage.morphology import remove_small_holes, remove_small_objects
 
+# skan provides richer branch metrics
 try:
     from skan import Skeleton, summarize
     SKAN_AVAILABLE = True
@@ -29,13 +30,13 @@ except Exception:
 @dataclass
 class PipelineConfig:
     mode: str = "single_neuron"          # single_neuron | spine | cilia | network
-    channel: Optional[int] = None
-    z_project: str = "max"               # max | mean
-    gaussian_sigma: float = 0.0
+    channel: Optional[int] = None        # fluorescence channel (none = grayscale)
+    z_project: str = "max"               
+    gaussian_sigma: float = 0.0          # pre-threshold smoothing (0 = disabled)
     median_radius: int = 0
     threshold_method: str = "auto"       # auto | otsu | local
     local_block_size: int = 51
-    min_object_size: int = 64
+    min_object_size: int = 64            # discard small artifacts
     hole_area_threshold: int = 64
     background_disk_radius: int = 0
     center_weight: float = 1.0
@@ -58,7 +59,7 @@ class MorphologyPipeline:
     def __init__(self, config: PipelineConfig):
         self.config = config
 
-    # Public API
+    # Run per image
     def run(self, image_path: str | Path, output_dir: str | Path) -> Dict[str, Any]:
         image_path = Path(image_path)
         output_dir = Path(output_dir)
@@ -74,6 +75,7 @@ class MorphologyPipeline:
         sholl_df = pd.DataFrame()
         sholl_metrics: Dict[str, Any] = {}
 
+        # isolate central neuron and re-root skeleton
         if self.config.mode in {"single_neuron", "spine"}:
             mask = self.keep_central_structure(mask)
             skeleton = morphology.skeletonize(mask)
@@ -95,6 +97,7 @@ class MorphologyPipeline:
         elif self.config.mode == "network":
             skeleton = morphology.skeletonize(mask)
 
+        # remove spines below length threshold
         branch_df = self.extract_branch_table(skeleton)
         if not branch_df.empty and self.config.mode in {"single_neuron", "spine"}:
             branch_df = branch_df[
@@ -136,6 +139,7 @@ class MorphologyPipeline:
     def select_channel_and_project(self, image: np.ndarray) -> np.ndarray:
         arr = np.asarray(image)
 
+        # For 4D Imaging: (Z, Y, X, C) or (C, Z, Y, X)
         if arr.ndim == 4:
             if arr.shape[-1] in (3, 4):
                 if self.config.channel is not None:
@@ -146,6 +150,7 @@ class MorphologyPipeline:
                     arr = arr[self.config.channel]
                 arr = arr.mean(axis=0) if self.config.z_project == "mean" else arr.max(axis=0)
 
+        # For 3D Imaging: RBG or z-stack without a channel
         elif arr.ndim == 3:
             if arr.shape[-1] in (3, 4):
                 if self.config.channel is None:
@@ -175,6 +180,7 @@ class MorphologyPipeline:
         if self.config.mode == "network" and self.config.network_use_frangi:
             img = filters.frangi(img)
 
+        # Finds lower 1% and higher 2% of pixel brightness and scale to [0, 1] 
         p_low, p_high = np.percentile(img, (1, 98))
         img = np.clip(img, p_low, p_high)
         img = exposure.rescale_intensity(img, out_range=(0, 1))
@@ -194,6 +200,7 @@ class MorphologyPipeline:
             morphology.disk(self.config.background_disk_radius)
         )
 
+        # Paint in bright soma region with the median background 
         inpainted = img.copy()
         inpainted[halo_mask] = np.median(img[~halo_mask])
         inpainted = filters.gaussian(inpainted, sigma=sigma)
