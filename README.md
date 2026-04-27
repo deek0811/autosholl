@@ -2,6 +2,10 @@
 
 Automated pipeline for processing neuron images with structured CSV output.
 
+Package preprocesses, thresholds, segments, and skeletonizes structures for input in automated Sholl analysis.
+
+Fail-safes are built into the package so end-users can assess pipeline effectiveness and troubleshoot pinch-points.
+
 ---
 
 ## Installation
